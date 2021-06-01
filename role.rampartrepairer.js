@@ -1,50 +1,43 @@
-
-//var roleUpgrader = require('role.upgrader');
-
 module.exports = {
     run: function(creep) {
-        if (creep.memory.working == true && creep.carry.energy == 0) {
+        if (creep.memory.working && creep.store[RESOURCE_ENERGY] === 0) {
             creep.memory.working = false;
+            creep.say('🔄 harvest');
         }
-        else if (creep.memory.working == false && creep.carry.energy == creep.carryCapacity) {
+        if (!creep.memory.working && creep.store.getFreeCapacity() === 0) {
             creep.memory.working = true;
+            creep.say('offload');
         }
 
-        if (creep.memory.working == true) {
+        if (creep.memory.working !== true) {
+            var [resourceID, ifDropped] = evaluateEnergyResources(creep, false, false,
+                true, true); // find energy function in myFunctions
+            if (resourceID !== undefined) {
+                energy = Game.getObjectById(resourceID);
+                if (ifDropped) { // if energy is dropped
+                    if (creep.pickup(energy) === ERR_NOT_IN_RANGE) {
+                        creep.travelTo(energy);
+                    }
+                } else { // energy is from container, storage or link
+                    if (creep.withdraw(energy, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                        creep.travelTo(energy);
+                    }
+                }
+            }
+        } else {
             var target = Game.getObjectById(Game.rooms[creep.room.name].memory.toBuildRampart);
-            if ((runEveryTicks(400) == true)||(target == undefined)) {
+            if ((runEveryTicks(50) === true) || (target === undefined)) {
                 Game.rooms[creep.room.name].memory.toBuildRampart = whichRampartToBuild(creep.room).id
             }
-            if (target != undefined) {
-                creep.say('rampart...');
+            if (target !== undefined) {
+                creep.say('r');
                 //console.log(creep.room.name,target);
-                if (creep.repair(target) == ERR_NOT_IN_RANGE) {
-                        creep.travelTo(target);
-                        creep.repair(target)
-                    }
+                if (creep.repair(target) === ERR_NOT_IN_RANGE) {
+                    creep.travelTo(target);
+                    creep.repair(target)
+                }
             }
         }
-            //else {
-             //   roleUpgrader.run(creep);
-            //}
-        
-    
-    /*    else {
-          var [resourceID, ifDropped] = evaluateEnergyResources(creep, true, true, true, true); // find energy functoin in myFunctoins
-          if (resourceID != undefined) {
-            energy = Game.getObjectById(resourceID);
-            if (ifDropped) { // if energy is dropped
-              if (creep.pickup(energy) == ERR_NOT_IN_RANGE) {
-                  creep.moveTo(energy);
-              }
-            }*/
-    
-    // if creep is supposed to get energy
-        else {
-             creep.getEnergy(true, true);
-            }  
-            
-            
-        
     }
 };
+
